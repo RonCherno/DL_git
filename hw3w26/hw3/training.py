@@ -93,8 +93,37 @@ class Trainer(abc.ABC):
             #  - Save losses and accuracies in the lists above.
             #  - Implement early stopping. This is a very useful and
             #    simple regularization technique that is highly recommended.
-            # ====== YOUR CODE: ======
-            pass
+            # ====== YOUR CODE: ====== #
+            train_result = self.train_epoch(dl_train, verbose=verbose, **kw)
+            test_result = self.test_epoch(dl_test, verbose=verbose, **kw)
+
+            # Store losses
+            current_train_loss = sum(train_result.losses) / len(train_result.losses)
+            current_test_loss = sum(test_result.losses) / len(test_result.losses)
+
+            train_loss.append(current_train_loss)
+            train_acc.append(train_result.accuracy)
+
+            test_loss.append(current_test_loss)
+            test_acc.append(test_result.accuracy)
+
+            actual_num_epochs += 1
+
+            # Checkpointing
+            if best_acc is None or test_result.accuracy > best_acc:
+                best_acc = test_result.accuracy
+                save_checkpoint = True
+
+            if early_stopping is not None:
+                # If current loss is the lowest we've seen so far, reset counter
+                if current_test_loss <= min(test_loss):
+                    epochs_without_improvement = 0
+                else:
+                    epochs_without_improvement += 1
+
+                if epochs_without_improvement >= early_stopping:
+                    self._print(f"Early stopping invoked after {epoch + 1} epochs.", verbose)
+                    break
             # ========================
 
             # Save model checkpoint if requested
@@ -229,7 +258,7 @@ class RNNTrainer(Trainer):
     def test_epoch(self, dl_test: DataLoader, **kw):
         # TODO: Implement modifications to the base method, if needed.
         # ====== YOUR CODE: ======
-        pass
+        self.hidden_state = None
         # ========================
         return super().test_epoch(dl_test, **kw)
 

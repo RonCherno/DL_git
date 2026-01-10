@@ -29,7 +29,7 @@ NUM_NODES=1
 NUM_CORES=2
 NUM_GPUS=1
 JOB_NAME="test_job"
-MAIL_USER="kerenmizrahi@campus.technion.ac.il"
+MAIL_USER="ronchernoguz@campus.technion.ac.il"
 MAIL_TYPE=ALL # Valid values are NONE, BEGIN, END, FAIL, REQUEUE, ALL
 
 ###
@@ -62,60 +62,8 @@ conda activate $CONDA_ENV
 
 # Our code:
 #==========================================================
-# -----------------Experiment 1.1-------------------------- 
 
-# K=32 fixed, with L=2,4,8,16 varying per run
-K=32
-for L in 2 4 8 16; do
-    srun -c 2 --gres=gpu:1 python -m hw2.experiments run-exp -n exp1_1 -K $K -L $L -P 6 -H 256 64 16 -d cuda --reg 0.0001 --lr 0.0003
-done
-
-# K=64 fixed, with L=2,4,8,16 varying per run
-K=64
-for L in 2 4 8 16; do
-    srun -c 2 --gres=gpu:1 python -m hw2.experiments run-exp -n exp1_1 -K $K -L $L -P 6 -H 256 64 16 -d cuda --reg 0.0001 --lr 0.0003
-done
-
-#-----------------Experiment 1.2------------------------- 
-
-#L=2 fixed, with K=[32],[64],[128] varying per run.
-L=2
-for K in 32 64 128; do
-    srun -c 2 --gres=gpu:1 python -m hw2.experiments run-exp -n exp1_2 -K $K -L $L -P 6 -H 256 64 16 -d cuda --reg 0.001 --lr 0.0003
-done
-
-#L=4 fixed, with K=[32],[64],[128] varying per run.
-L=4
-for K in 32 64 128; do
-    srun -c 2 --gres=gpu:1 python -m hw2.experiments run-exp -n exp1_2 -K $K -L $L -P 6 -H 256 64 16 -d cuda --reg 0.001 --lr 0.0003
-done
-
-#L=8 fixed, with K=[32],[64],[128] varying per run.
-L=8
-for K in 32 64 128; do
-    srun -c 2 --gres=gpu:1 python -m hw2.experiments run-exp -n exp1_2 -K $K -L $L -P 6 -H 256 64 16 -d cuda --reg 0.001 --lr 0.0001
-done
-
-# srun -c 2 --gres=gpu:1 python -m hw2.experiments run-exp -n exp1_2 -K 32 -L 8 -P 6 -H 256 64 16 -d cuda --reg 0.001 --lr 0.0003 
-
-#-----------------Experiment 1.3-----------------------
-
-# K=[64, 128] fixed with L=2,3,4 varying per run
-for L in 2 3 4; do
-    srun -c 2 --gres=gpu:1 python -m hw2.experiments run-exp -n exp1_3 -K 64 128 -L $L -P 3 -H 256 64 16 -d cuda --reg 0.001 --lr 0.0002
-done
-
-#-----------------Experiment 1.4-----------------------
-
-#K=[32] fixed with L=8,16,32 varying per run
-for L in 8 16 32; do
-    srun -c 2 --gres=gpu:1 python -m hw2.experiments run-exp -n exp1_4 -K 32 -L $L -P 6 -H 256 64 16 -d cuda -M resnet --lr 0.0005 --reg 0.001
-done
-
-#K=[64, 128, 256] fixed with L=2,4,8 varying per run
-for L in 2 4 8; do
-    srun -c 2 --gres=gpu:1 python -m hw2.experiments run-exp -n exp1_4 -K 64 128 256 -L $L -P 6 -H 256 64 16 -d cuda -M resnet --reg 0.001 --lr 0.0005
-done
+python -u main.py run-nb Part1_Sequence.ipynb
 
 #=========================================================
 
