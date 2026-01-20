@@ -118,47 +118,20 @@ def part2_vae_hyperparams():
 
 
 part2_q1 = r"""
-The $\sigma^2$ hyperparameter is in essence what decides how much the model will tolerate a difference between the
-original data and the reconstructed data.  
-In case $\sigma$ is low the term $\frac{1}{\sigma^2}$ will be large and the model will highly penalize every difference
-between the original data and the reconstructed data. This will result in a model that focuses on generating a photo
-as similar to the original as possible. While such a model will probably generate sharper and higher detailed
-photos it will result in the model 'overfitting' the training set, resulting in difficulties generating meaningfull 
-outputs from randomly sampled z.
-On the contrary, very high $\sigma$ will result in low $\frac{1}{\sigma^2}$, thus the model will focus on minimizing the
-KL divergence, resulting in generating an output that is the 'average' of the dataset (a non meaningfully blob)
+**Your answer:**
 """
 
 part2_q2 = r"""
-1) The reconstruction loss measures how well the decoder can recreate the original input from the latent vector. 
-The KL divergence loss acts as a constraint that forces the encoder's learned distribution to approximate a  normal 
-distribution, preventing the model from simply memorizing the training data.
-
-2) The KL loss term fundamentally shapes the latent space by pulling all encoded data points toward the mean and 
-forcing them to have some variance. Instead of mapping an image to a single precise point, the encoder maps it to an 
-area. This causes the representations of similar images to overlap and fill the space 
-densely, rather than leaving empty gaps between data points.
-
-3) The primary benefit of this regularization is that it makes the latent space continuous and valid for generation.
-Because every data instance is mapped to an area, you can pick a random point from a standard normal distribution 
-and the decoder will produce a coherent image. This allows generation of new, realistic samples that didn't exist in 
-the training set.
+**Your answer:**
 """
 
 part2_q3 = r"""
-By maximizing the evidence distribution we find the parameters that maximize the likelihood of the observed data
-(MLE). This way we ensure the model assigns high probability to real datapoints, making it capable of generating
-similar new data.
-
+**Your answer:**
 """
 
 part2_q4 = r"""
-Firstly working with the log likelihood results in better numerical stability as very small and large values become 
-manageable. In addition, to maximize the variational lower bound, the model must minimize the KL divergence between 
-the encoder's approximate posterior and the prior. 
-The resulting equation explicitly includes the log of the variance.
-
- (z∣x) and the prior p(z)"""
+**Your answer:**
+"""
 
 
 def part3_transformer_encoder_hyperparams():

@@ -94,36 +94,15 @@ class Trainer(abc.ABC):
             #  - Implement early stopping. This is a very useful and
             #    simple regularization technique that is highly recommended.
             # ====== YOUR CODE: ====== #
-            train_result = self.train_epoch(dl_train, verbose=verbose, **kw)
-            test_result = self.test_epoch(dl_test, verbose=verbose, **kw)
-
-            # Store losses
-            current_train_loss = sum(train_result.losses) / len(train_result.losses)
-            current_test_loss = sum(test_result.losses) / len(test_result.losses)
-
-            train_loss.append(current_train_loss)
+            train_result = self.train_epoch(dl_train, **kw)
+            with torch.no_grad():
+                test_result = self.test_epoch(dl_test, **kw)
+            train_loss.append(train_result.losses)
             train_acc.append(train_result.accuracy)
-
-            test_loss.append(current_test_loss)
+            test_loss.append(test_result.losses)
             test_acc.append(test_result.accuracy)
 
             actual_num_epochs += 1
-
-            # Checkpointing
-            if best_acc is None or test_result.accuracy > best_acc:
-                best_acc = test_result.accuracy
-                save_checkpoint = True
-
-            if early_stopping is not None:
-                # If current loss is the lowest we've seen so far, reset counter
-                if current_test_loss <= min(test_loss):
-                    epochs_without_improvement = 0
-                else:
-                    epochs_without_improvement += 1
-
-                if epochs_without_improvement >= early_stopping:
-                    self._print(f"Early stopping invoked after {epoch + 1} epochs.", verbose)
-                    break
             # ========================
 
             # Save model checkpoint if requested
@@ -323,11 +302,7 @@ class VAETrainer(Trainer):
         x = x.to(self.device)  # Image batch (N,C,H,W)
         # TODO: Train a VAE on one batch.
         # ====== YOUR CODE: ======
-        self.optimizer.zero_grad()
-        xr, mu, log_sigma2 = self.model(x)
-        loss, data_loss, kldiv_loss = self.loss_fn(x, xr, mu, log_sigma2)
-        loss.backward()
-        self.optimizer.step()
+        pass
         # ========================
 
         return BatchResult(loss.item(), 1 / data_loss.item())
@@ -339,8 +314,7 @@ class VAETrainer(Trainer):
         with torch.no_grad():
             # TODO: Evaluate a VAE on one batch.
             # ====== YOUR CODE: ======
-            xr, mu, log_sigma2 = self.model(x)
-            loss, data_loss, kldiv_loss = self.loss_fn(x, xr, mu, log_sigma2)
+            pass
             # ========================
 
         return BatchResult(loss.item(), 1 / data_loss.item())
