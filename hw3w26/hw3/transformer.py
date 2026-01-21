@@ -26,7 +26,75 @@ def sliding_window_attention(q, k, v, window_size, padding_mask=None):
     values, attention = None, None
 
     # ====== YOUR CODE: ======
-    pass
+    device = q.device
+    k, v = k.to(device), v.to(device)
+    if padding_mask is not None:
+        padding_mask = padding_mask.to(device)
+
+    win = window_size // 2
+    is_multi = q.dim() == 4
+    B = q.size(0)
+    H = q.size(1) if is_multi else 1
+    L = q.size(-2)
+    D = q.size(-1)
+
+    # pad keys for window extraction
+    k_pad = torch.nn.functional.pad(k, (0, 0, win, win))
+
+    # build sliding indices
+    base_idx = torch.arange(k_pad.size(-2), device=device)
+    win_idx = base_idx.unfold(0, window_size + 1, 1)
+
+    if is_multi:
+        gather_idx = (
+            win_idx[None, None, :, :, None]
+            .expand(B, H, -1, -1, D)
+        )
+        k_view = k_pad[:, :, None].expand(-1, -1, L, -1, -1)
+    else:
+        gather_idx = (
+            win_idx[None, :, :, None]
+            .expand(B, -1, -1, D)
+        )
+        k_view = k_pad[:, None].expand(-1, L, -1, -1)
+
+    k_local = torch.gather(k_view, -2, gather_idx)
+
+    q_exp = q.unsqueeze(-2)
+    scores = torch.matmul(q_exp, k_local.transpose(-1, -2))
+    scores = scores.squeeze(-2) / math.sqrt(D)
+
+    # map local scores back into full attention matrix
+    offsets = torch.arange(-win, win + 1, device=device)
+    pos = torch.arange(L, device=device)[:, None] + offsets[None, :]
+    pos = pos.clamp(0, L - 1)
+
+    if is_multi:
+        pos = pos[None, None].expand(B, H, -1, -1)
+        full_scores = torch.zeros(B, H, L, L, device=device)
+        full_scores.scatter_add_(3, pos, scores)
+    else:
+        pos = pos[None].expand(B, -1, -1)
+        full_scores = torch.zeros(B, L, L, device=device)
+        full_scores.scatter_add_(2, pos, scores)
+
+    full_scores = torch.where(
+        full_scores == 0,
+        torch.tensor(float("-inf"), device=device, dtype=full_scores.dtype),
+        full_scores,
+    )
+
+    if padding_mask is not None:
+        if is_multi:
+            pm = padding_mask[:, None, None, :]
+        else:
+            pm = padding_mask[:, None, :]
+        full_scores = full_scores.masked_fill(pm == 0, float("-inf"))
+        full_scores = full_scores.masked_fill(pm.transpose(-1, -2) == 0, float("-inf"))
+
+    attention = torch.softmax(full_scores, dim=-1)
+    attention = torch.nan_to_num(attention, nan=0.0)
+    values = torch.matmul(attention, v)
     # ======================
 
     return values, attention
@@ -69,7 +137,7 @@ class MultiHeadAttention(nn.Module):
         # Determine value outputs
         # call the sliding window attention function you implemented
         # ====== YOUR CODE: ======
-        pass
+        values, attention = sliding_window_attention(q, k, v, self.window_size, padding_mask)
         # ========================
 
         values = values.permute(0, 2, 1, 3) # [Batch, SeqLen, Head, Dims]
@@ -146,7 +214,12 @@ class EncoderLayer(nn.Module):
         '''
 
         # ====== YOUR CODE: ======
-        pass
+        # 1) Self attention. attention -> dropout -> residual -> normalization 1
+        attn_out = self.self_attn(x, padding_mask)
+        x = self.norm1(x + self.dropout(attn_out))
+        # 2) Fead forward. ff -> dropout -> residual -> normalization 2
+        ff_out = self.feed_forward(x)
+        x = self.norm2(x + self.dropout(ff_out))
         # ========================
         
         return x
@@ -188,7 +261,13 @@ class Encoder(nn.Module):
         output = None
 
         # ====== YOUR CODE: ======
-        pass
+        x = self.encoder_embedding(sentence)
+        x = self.positional_encoding(x)
+        x = self.dropout(x)
+        for layer in self.encoder_layers:
+            x = layer(x, padding_mask)
+        first_token_repr = x[:, 0, :]
+        output = self.classification_mlp(first_token_repr)
         # ========================
         
         
